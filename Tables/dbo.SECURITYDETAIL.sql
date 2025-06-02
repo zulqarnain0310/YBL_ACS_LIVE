@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[SECURITYDETAIL] (
+  [UCIF_ID] [varchar](50) NULL,
+  [TOTALSECURITY] [decimal](38) NULL
+)
+ON [PRIMARY]
+GO

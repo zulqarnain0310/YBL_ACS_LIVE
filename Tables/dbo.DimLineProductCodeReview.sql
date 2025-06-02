@@ -1,0 +1,29 @@
+﻿CREATE TABLE [dbo].[DimLineProductCodeReview] (
+  [ReviewLineProductCode_Key] [smallint] IDENTITY,
+  [ReviewLineProductCodeAlt_Key] [smallint] NOT NULL,
+  [ReviewLineProductCode] [varchar](20) NULL,
+  [ReviewLineProductCodeName] [varchar](200) NULL,
+  [ReviewLineProductCodeShortName] [varchar](20) NULL,
+  [ReviewLineProductCodeShortNameEnum] [varchar](20) NULL,
+  [ReviewLineProductCodeGroup] [varchar](50) NULL,
+  [ReviewLineProductCodeSubGroup] [varchar](50) NULL,
+  [ReviewLineProductCodeSegment] [varchar](50) NULL,
+  [ReviewLineProductCodeValidCode] [char](1) NULL,
+  [SrcSysReviewLineProductCodeCode] [varchar](50) NULL,
+  [SrcSysReviewLineProductCodeName] [varchar](50) NULL,
+  [DestSysReviewLineProductCodeCode] [varchar](10) NULL,
+  [AssetNorm] [varchar](10) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NULL,
+  [EffectiveToTimeKey] [int] NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModified] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [timestamp],
+  [CodeType] [varchar](50) NULL
+)
+ON [PRIMARY]
+GO

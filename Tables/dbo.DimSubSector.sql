@@ -1,0 +1,30 @@
+﻿CREATE TABLE [dbo].[DimSubSector] (
+  [SubSector_Key] [smallint] NOT NULL,
+  [SubSectorAlt_Key] [smallint] NOT NULL,
+  [SubSectorNameOrderKey] [tinyint] NULL,
+  [SubSectorName] [varchar](50) NULL,
+  [SubSectorShortName] [varchar](20) NULL,
+  [SubSectorShortNameEnum] [varchar](20) NULL,
+  [SubSectorGroup] [varchar](50) NULL,
+  [SubSectorSubGroup] [varchar](50) NULL,
+  [SubSectorSegment] [varchar](50) NULL,
+  [SubSectorValidCode] [char](1) NULL,
+  [CIBILBusinessCategory] [varchar](10) NULL,
+  [SrcSysSubSectorCode] [varchar](50) NULL,
+  [SrcSysSubSectorName] [varchar](50) NULL,
+  [DestSysSubSectorCode] [varchar](10) NULL,
+  [DestSysSectorCode] [varchar](10) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NULL,
+  [EffectiveToTimeKey] [int] NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModifie] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [timestamp],
+  [Remarks] [varchar](500) NULL
+)
+ON [PRIMARY]
+GO

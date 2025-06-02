@@ -1,0 +1,503 @@
+﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
+GO
+
+
+
+
+/*=========================================
+ AUTHER : SANJEEV KUMAR SHARMA
+ CREATE DATE : 18-11-2017
+ MODIFY DATE : 08-04-2021
+ DESCRIPTION : FIRST UPGRADE TO CUSTOMER LEVEL  AFTER THAT ACCOUNT LEVEL
+=============================================*/
+CREATE PROCEDURE [pro].[Upgrade_Customer_Account_1]
+@TIMEKEY INT
+WITH RECOMPILE
+AS
+BEGIN
+  SET NOCOUNT ON
+   BEGIN TRY
+   
+/*check the customer when all account to cutomer dpdmax must be 0*/
+
+DECLARE @PROCESSDATE DATE=(SELECT Date FROM SysDayMatrix WHERE TimeKey=@TIMEKEY)
+
+
+UPDATE PRO.ACCOUNTCAL SET FLGUPG='N'
+UPDATE PRO.CUSTOMERCAL SET FLGUPG='N'
+
+
+--/*--------MOC CUSTOMER NOT UPGRADED ACCOUNT---------*/
+--UPDATE A SET A.MocStatusMark='Y' FROM   PRO.CustomerCal A inner join  PreMoc.CustomerCal B  ON A.CustomerEntityID=B.CustomerEntityID
+--WHERE  B.EffectiveFromTimeKey<=@TIMEKEY AND B.EffectiveToTimeKey>=@TIMEKEY
+--AND B.MocStatusMark='Y'
+
+
+
+--IF OBJECT_ID('TEMPDB..#TEMPTABLE') IS NOT NULL
+--      DROP TABLE #TEMPTABLE
+
+--SELECT A.RefCustomerID,TOTALCOUNT  INTO #TEMPTABLE FROM 
+--(
+--SELECT A.RefCustomerID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID 
+--WHERE (A.FlgProcessing='N' )
+--GROUP BY A.RefCustomerID
+--)
+--A INNER JOIN 
+--(
+--SELECT A.RefCustomerID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+--WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+--   and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+--   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+--   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+--   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+--   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+--   and B.InitialAssetClassAlt_Key not in(1)
+--AND (A.FlgProcessing='N')
+--AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+--AND  ISNULL(A.MocStatusMark,'N')='N' 
+--AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+
+----AND A.RefCustomerID NOT IN  /*----FOR AdvCustStressedAssetDetail ACCOUNT------ */
+----(
+----SELECT CustomerEntityID FROM  AdvCustStressedAssetDetail
+----WHERE EffectiveFromTimeKey<=@TIMEKEY AND EffectiveToTimeKey>=@TIMEKEY
+----)
+----AND A.CustomerEntityID NOT IN  /*---FOR RESTRUCTURE ACCOUNT ----*/
+----(
+----SELECT CustomerEntityID FROM  CurDat.AdvAcRestructureDetail A INNER JOIN PRO.AccountCal B ON A.AccountEntityId=B.AccountEntityID
+----WHERE  DATEADD(YEAR,1,A.RestructureDt)>@PROCESSDATE  
+---- AND B.InitialAssetClassAlt_Key<>1
+----)
+--GROUP BY A.RefCustomerID
+
+--) B ON A.RefCustomerID=B.RefCustomerID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+
+
+
+--  /*------ UPGRADING CUSTOMER-----------*/
+
+
+--UPDATE A SET A.FlgUpg='U'
+--FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLE B ON A.RefCustomerID=B.RefCustomerID
+-- INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+--WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+
+--UPDATE   PRO.CustomerCal SET SysNPA_Dt=NULL,
+--							 DbtDt=NULL,
+--							 LossDt=NULL,
+--							 ErosionDt=NULL,
+--							 FlgErosion='N',
+--							 SysAssetClassAlt_Key=1
+--							 ,FlgDeg='N'
+--WHERE FlgUpg='U'
+
+
+--/*--------MARKING UPGRADED ACCOUNT --------------*/
+
+--UPDATE B SET  B.UpgDate=@PROCESSDATE
+--             ,B.DegReason=NULL
+--			 ,B.FinalAssetClassAlt_Key=1
+--			 ,B.FlgDeg='N'
+--			 ,B.FinalNpaDt=null
+--             ,b.FlgUpg='U'
+
+--FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+--WHERE  ISNULL(A.FlgUpg,'U')='U' AND (ISNULL(A.FlgProcessing,'N')='N')
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLE') IS NOT NULL
+      DROP TABLE #TEMPTABLE
+
+SELECT A.UCIF_ID,TOTALCOUNT  INTO #TEMPTABLE FROM 
+(
+SELECT A.UCIF_ID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.UCIF_ID=B.UCIF_ID 
+WHERE (A.FlgProcessing='N' ) AND A.UCIF_ID IS NOT NULL
+--AND A.UCIF_ID<>'0'
+GROUP BY A.UCIF_ID
+)
+A INNER JOIN 
+(
+SELECT A.UCIF_ID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.UCIF_ID=B.UCIF_ID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+ --  and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.InitialAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS NOT NULL
+--AND A.UCIF_ID<>'0'
+GROUP BY A.UCIF_ID
+
+) B ON A.UCIF_ID=B.UCIF_ID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+
+
+
+  /*------ UPGRADING CUSTOMER-----------*/
+
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLE B ON A.UCIF_ID=B.UCIF_ID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLE1') IS NOT NULL
+      DROP TABLE #TEMPTABLE1
+
+SELECT A.UCIF_ID,TOTALCOUNT  INTO #TEMPTABLE1 FROM 
+(
+SELECT A.UCIF_ID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.UCIF_ID=B.UCIF_ID 
+WHERE (A.FlgProcessing='N' ) AND A.UCIF_ID IS NOT NULL
+ --Condition changed  By Triloki Khanna  08/04/2021 One Account 'ALWYS_STD' and DPD of All other accounts Zero , so condition of  ALWYS_STD Added
+AND B.Asset_Norm NOT IN ('ALWYS_STD')
+--AND A.UCIF_ID<>'0'
+GROUP BY A.UCIF_ID
+)
+A INNER JOIN 
+(
+SELECT A.UCIF_ID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.UCIF_ID=B.UCIF_ID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+  -- and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.FinalAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS NOT NULL
+--AND A.UCIF_ID<>'0'
+GROUP BY A.UCIF_ID
+
+) B ON A.UCIF_ID=B.UCIF_ID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+
+
+
+  /*------ UPGRADING CUSTOMER-----------*/
+
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLE1 B ON A.UCIF_ID=B.UCIF_ID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLERefCustomerID') IS NOT NULL
+      DROP TABLE #TEMPTABLERefCustomerID
+
+SELECT A.RefCustomerID,TOTALCOUNT  INTO #TEMPTABLERefCustomerID FROM 
+(
+SELECT A.RefCustomerID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID 
+WHERE (A.FlgProcessing='N' ) AND A.UCIF_ID IS  NULL 
+ and A.RefCustomerID is not null
+--AND A.UCIF_ID<>'0'
+GROUP BY A.RefCustomerID
+)
+A INNER JOIN 
+(
+SELECT A.RefCustomerID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+  -- and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.InitialAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS  NULL 
+AND A.RefCustomerID is not null
+--AND A.UCIF_ID<>'0'
+GROUP BY A.RefCustomerID
+
+) B ON A.RefCustomerID=B.RefCustomerID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+
+  /*-----------UPGRADING CUSTOMER----------*/
+
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLERefCustomerID B ON A.RefCustomerID=B.RefCustomerID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+/*-----------UPGRADING CUSTOMER added 18/11/2019 where final asset class npa but dpd zero-----------*/
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLERefCustomerIDNew') IS NOT NULL
+      DROP TABLE #TEMPTABLERefCustomerIDNew
+
+SELECT A.RefCustomerID,TOTALCOUNT  INTO #TEMPTABLERefCustomerIDNew FROM 
+(
+SELECT A.RefCustomerID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID 
+WHERE (A.FlgProcessing='N' ) AND A.UCIF_ID IS  NULL 
+ and A.RefCustomerID is not null
+--AND A.UCIF_ID<>'0'
+ --Condition changed  By Triloki Khanna  08/04/2021 One Account 'ALWYS_STD' and DPD of All other accounts Zero , so condition of  ALWYS_STD Added
+AND B.Asset_Norm NOT IN ('ALWYS_STD')
+GROUP BY A.RefCustomerID
+)
+A INNER JOIN 
+(
+SELECT A.RefCustomerID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+  -- and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.FinalAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS  NULL 
+--AND A.UCIF_ID<>'0'
+AND A.RefCustomerID is not null
+GROUP BY A.RefCustomerID
+
+) B ON A.RefCustomerID=B.RefCustomerID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+/*-----------UPGRADING CUSTOMER added 18/11/2019 where final asset class npa but dpd zero-----------*/
+
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLERefCustomerIDNew B ON A.RefCustomerID=B.RefCustomerID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+-----As per mail dated 07/02/2022 Modification done Triloki Khanna-----
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLESourceSystemCustomerID') IS NOT NULL
+      DROP TABLE #TEMPTABLESourceSystemCustomerID
+
+SELECT A.SourceSystemCustomerID,TOTALCOUNT  INTO #TEMPTABLESourceSystemCustomerID FROM 
+(
+SELECT A.SourceSystemCustomerID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID 
+WHERE (A.FlgProcessing='N' ) AND A.UCIF_ID IS  NULL AND A.RefCustomerID IS  NULL
+ and A.SourceSystemCustomerID is not null
+--AND A.UCIF_ID<>'0'
+GROUP BY A.SourceSystemCustomerID
+)
+A INNER JOIN 
+(
+SELECT A.SourceSystemCustomerID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+  -- and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.InitialAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS  NULL 
+AND A.RefCustomerID IS  NULL 
+AND A.SourceSystemCustomerID is not null
+--AND A.UCIF_ID<>'0'
+GROUP BY A.SourceSystemCustomerID
+
+) B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+/*-----------UPGRADING CUSTOMER----------*/
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLESourceSystemCustomerID B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+IF OBJECT_ID('TEMPDB..#TEMPTABLESourceSystemCustomerIDNew') IS NOT NULL
+      DROP TABLE #TEMPTABLESourceSystemCustomerIDNew
+
+SELECT A.SourceSystemCustomerID,TOTALCOUNT  INTO #TEMPTABLESourceSystemCustomerIDNew FROM 
+(
+SELECT A.SourceSystemCustomerID,COUNT(1) TOTALCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID 
+WHERE (A.FlgProcessing='N' )  AND A.UCIF_ID IS  NULL AND A.RefCustomerID IS  NULL
+ and A.SourceSystemCustomerID is not null
+--AND A.UCIF_ID<>'0'
+ --Condition changed  By Triloki Khanna  08/04/2021 One Account 'ALWYS_STD' and DPD of All other accounts Zero , so condition of  ALWYS_STD Added
+AND B.Asset_Norm NOT IN ('ALWYS_STD')
+GROUP BY A.SourceSystemCustomerID
+)
+A INNER JOIN 
+(
+SELECT A.SourceSystemCustomerID,COUNT(1) TOTALDPD_MAXCOUNT FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+WHERE (B.DPD_INTSERVICE<=B.REFPERIODINTSERVICEUPG
+  -- and B.DPD_NOCREDIT <=B.REFPERIODNOCREDITUPG
+   and B.DPD_OVERDRAWN <=B.REFPERIODOVERDRAWNUPG
+   and B.DPD_OVERDUE<=B.REFPERIODOVERDUEUPG
+   and B.DPD_RENEWAL<=B.REFPERIODREVIEWUPG
+   and B.DPD_STOCKSTMT <=B.REFPERIODSTKSTATEMENTUPG)
+   and B.FinalAssetClassAlt_Key not in(1)
+AND (A.FlgProcessing='N')
+AND B.Asset_Norm NOT IN ('ALWYS_NPA','ALWYS_STD')
+AND  ISNULL(A.MocStatusMark,'N')='N' 
+AND  ISNULL(B.AccountStatus,'N')<>'Z' 
+AND ISNULL(B.BankAssetClasS,'N')<>'WRITEOFF'
+AND A.UCIF_ID IS  NULL AND A.RefCustomerID IS  NULL
+ and A.SourceSystemCustomerID is not null
+GROUP BY A.SourceSystemCustomerID
+
+) B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID AND A.TOTALCOUNT=B.TOTALDPD_MAXCOUNT
+
+
+
+/*-----------UPGRADING CUSTOMER added 18/11/2019 where final asset class npa but dpd zero-----------*/
+
+
+UPDATE A SET A.FlgUpg='U'
+FROM PRO.CUSTOMERCAL A INNER JOIN #TEMPTABLESourceSystemCustomerIDNew B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID
+ INNER JOIN DIMASSETCLASS C ON C.AssetClassAlt_Key=A.SYSASSETCLASSALT_KEY AND (C.EffectiveFromTimeKey<=@TIMEKEY AND C.EffectiveToTimeKey>=@TIMEKEY)
+WHERE  (not(isnull(A.ASSET_NORM,'NORMAL')='ALWYS_NPA' ) AND  C.ASSETCLASSGROUP ='NPA' AND not(ISNULL(A.FLGDEG,'N')='Y')) AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+/*-----------UPGRADING CUSTOMER added 18/11/2019 where final asset class npa but dpd zero-----------*/
+
+
+
+
+---Changes done by Triloki 12-06-2020 in case of Same Pan Number One Customer Upgrade and One Npa To handle that Issue ---
+
+IF OBJECT_ID('TEMPDB..#PANUPDATEUPGRADE') IS NOT NULL
+DROP TABLE #PANUPDATEUPGRADE
+
+SELECT A.PANNO,A.TotalCountMAX,B.TotalCount
+INTO #PANUPDATEUPGRADE
+FROM
+
+(
+
+SELECT Count(1) TotalCountMAX,PANNO FROM PRO.CUSTOMERCAL WHERE PANNO IS NOT NULL
+
+GROUP BY PANNO
+
+) A
+
+INNER JOIN
+
+(
+
+SELECT Count(1) TotalCount,PANNO FROM PRO.CUSTOMERCAL WHERE PANNO IS NOT NULL AND FLGUPG='U'
+
+GROUP BY PANNO
+
+) B ON A.PANNO=B.PANNO AND A.TotalCountMAX <> B.TotalCount
+
+
+UPDATE B SET FLGUPG='N' from #PANUPDATEUPGRADE A
+INNER JOIN PRO.CustomerCal B
+ON A.PANNO=B.PANNO
+WHERE B.FLGUPG='U'
+
+---Changes done by Triloki 12-06-2020 in case of Same Pan Number One Customer Upgrade and One Npa To handle that Issue ---
+
+UPDATE   PRO.CustomerCal SET SysNPA_Dt=NULL,
+							 DbtDt=NULL,
+							 LossDt=NULL,
+							 ErosionDt=NULL,
+							 FlgErosion='N',
+							 SysAssetClassAlt_Key=1
+							 ,FlgDeg='N'
+WHERE FlgUpg='U'
+
+
+/*--------MARKING UPGRADED ACCOUNT --------------*/
+
+UPDATE B SET  B.UpgDate=@PROCESSDATE
+             ,B.DegReason=NULL
+			 ,B.FinalAssetClassAlt_Key=1
+			 ,B.FlgDeg='N'
+			 ,B.FinalNpaDt=null
+             ,B.FlgUpg='U'
+			 FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.UCIF_ID=B.UCIF_ID
+WHERE  ISNULL(A.FlgUpg,'U')='U' AND (ISNULL(A.FlgProcessing,'N')='N')
+
+
+UPDATE B SET  B.UpgDate=@PROCESSDATE
+             ,B.DegReason=NULL
+			 ,B.FinalAssetClassAlt_Key=1
+			 ,B.FlgDeg='N'
+			 ,B.FinalNpaDt=null
+             ,B.FlgUpg='U'
+			 FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.RefCustomerID=B.RefCustomerID
+WHERE  ISNULL(A.FlgUpg,'U')='U' AND (ISNULL(A.FlgProcessing,'N')='N')
+
+-----As per mail dated 07/02/2022 Modification done Triloki Khanna-----
+UPDATE B SET  B.UpgDate=@PROCESSDATE
+             ,B.DegReason=NULL
+			 ,B.FinalAssetClassAlt_Key=1
+			 ,B.FlgDeg='N'
+			 ,B.FinalNpaDt=null
+             ,B.FlgUpg='U'
+			 FROM PRO.CUSTOMERCAL A INNER JOIN PRO.ACCOUNTCAL B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID
+WHERE  ISNULL(A.FlgUpg,'U')='U' AND (ISNULL(A.FlgProcessing,'N')='N')
+
+UPDATE A SET OVERDUESINCEDT=NULL,DPD_OVERDUE=0,DPD_MAX=0 FROM PRO.ACCOUNTCAL A WHERE  FLGDIRTYROW='Y'
+
+UPDATE A set DegReason=NULL FROM PRO.CustomerCal A where SysAssetClassAlt_Key=1 and DegReason is not null
+
+
+    DROP TABLE #TEMPTABLE
+	DROP TABLE #TEMPTABLE1
+	DROP TABLE #TEMPTABLERefCustomerID
+	DROP TABLE #PANUPDATEUPGRADE
+
+UPDATE PRO.ACLRUNNINGPROCESSSTATUS 
+	SET COMPLETED='Y',ERRORDATE=NULL,ERRORDESCRIPTION=NULL,COUNT=ISNULL(COUNT,0)+1
+	WHERE RUNNINGPROCESSNAME='Upgrade_Customer_Account'
+
+ 
+END TRY
+BEGIN  CATCH
+
+	UPDATE PRO.ACLRUNNINGPROCESSSTATUS 
+	SET COMPLETED='N',ERRORDATE=GETDATE(),ERRORDESCRIPTION=ERROR_MESSAGE(),COUNT=ISNULL(COUNT,0)+1
+	WHERE RUNNINGPROCESSNAME='Upgrade_Customer_Account'
+END CATCH
+
+SET NOCOUNT OFF
+END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GO

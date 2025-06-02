@@ -1,0 +1,35 @@
+﻿CREATE TABLE [dbo].[SysCRisMacMenu1] (
+  [EntityKey] [int] NOT NULL,
+  [MenuTitleId] [int] NULL,
+  [DataSeq] [int] NULL,
+  [MenuId] [int] NULL,
+  [ParentId] [int] NULL,
+  [MenuCaption] [nvarchar](300) NULL,
+  [ActionName] [varchar](50) NULL,
+  [Viewpath] [varchar](50) NULL,
+  [ngController] [varchar](50) NULL,
+  [BusFld] [nvarchar](1) NULL,
+  [ThirdGroup] [nvarchar](1) NULL,
+  [ApplicableFor] [nvarchar](5) NULL,
+  [Visible] [bit] NOT NULL,
+  [ReportId] [varchar](400) NULL,
+  [AvailableFor] [varchar](80) NULL,
+  [NonAllowOperation] [varchar](50) NULL,
+  [DeptGroupCode] [varchar](max) NULL,
+  [EnableMakerChecker] [char](1) NULL,
+  [ResponseTimeDisplay] [char](1) NULL,
+  [Deptartment] [char](200) NULL,
+  [SaveWithCER] [char](1) NULL,
+  [ExecutionCer] [char](1) NULL,
+  [AccessLevel] [varchar](20) NULL,
+  [GridApplicable] [char](1) NULL,
+  [Accordian] [char](1) NULL,
+  [ScreenType] [varchar](20) NULL,
+  [EditLimitDays] [tinyint] NULL,
+  [ScreenFrequency] [char](1) NULL,
+  [CarryForwordFlag] [char](1) NULL,
+  [FreqEndPeriod] [int] NULL
+)
+ON [PRIMARY]
+TEXTIMAGE_ON [PRIMARY]
+GO

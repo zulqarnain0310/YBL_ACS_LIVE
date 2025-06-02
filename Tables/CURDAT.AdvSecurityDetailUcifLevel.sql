@@ -1,0 +1,27 @@
+﻿CREATE TABLE [CURDAT].[AdvSecurityDetailUcifLevel] (
+  [EntityKey] [bigint] IDENTITY,
+  [UCIF_ID] [varchar](50) NULL,
+  [Security_RefNo] [varchar](50) NULL,
+  [CollateralID] [varchar](50) NULL,
+  [SecurityParticular] [varchar](1000) NULL,
+  [ValuationDate] [datetime] NULL,
+  [ValueAtSanctionTime] [decimal](16, 2) NULL,
+  [ValuationExpiryDate] [datetime] NULL,
+  [CurrentValue] [decimal](16, 2) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NOT NULL,
+  [EffectiveToTimeKey] [int] NOT NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModified] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [datetime] NULL,
+  [CurrencyAlt_Key] [int] NULL,
+  [CurrentValueInCurrency] [decimal](18, 2) NULL,
+  [Currencycode] [varchar](10) NULL,
+  [OrgCurrentValueInCurrency] [decimal](18, 2) NULL
+)
+ON [PRIMARY]
+GO

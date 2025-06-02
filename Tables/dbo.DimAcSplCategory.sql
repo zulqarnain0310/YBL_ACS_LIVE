@@ -1,0 +1,31 @@
+﻿CREATE TABLE [dbo].[DimAcSplCategory] (
+  [SplCat_Key] [smallint] NOT NULL,
+  [SplCatAlt_Key] [smallint] NOT NULL,
+  [SplCatName] [varchar](50) NULL,
+  [SplCatShortName] [varchar](20) NULL,
+  [SplCatShortNameEnum] [varchar](20) NULL,
+  [SplCatGroup] [varchar](50) NULL,
+  [SplCatSubGroup] [varchar](50) NULL,
+  [SplCatSegment] [varchar](50) NULL,
+  [SplCatValidCode] [char](1) NULL,
+  [AssetClass] [varchar](20) NULL,
+  [Applicability] [varchar](20) NULL,
+  [SrcSysSplCatCode] [varchar](50) NULL,
+  [SrcSysSplCatName] [varchar](50) NULL,
+  [DestSysAcSplCategoryCode] [varchar](10) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NULL,
+  [EffectiveToTimeKey] [int] NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModifie] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [timestamp],
+  [DestSysAcSplCategoryTXN_Code] [varchar](10) NULL,
+  [DestSysAcSplCategoryTXN_Name] [varchar](10) NULL,
+  [NewFacilityAllowed] [char](1) NULL
+)
+ON [PRIMARY]
+GO

@@ -1,0 +1,10 @@
+﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
+GO
+
+CREATE PROCedure [dbo].[Rpt-SysReportFormat]
+
+AS
+BEGIN
+SELECT * FROM Dbo.SysReportformat
+END
+GO

@@ -1,0 +1,2 @@
+﻿CREATE SCHEMA [CurDat1]
+GO

@@ -1,0 +1,33 @@
+﻿CREATE TABLE [dbo].[DimScheme] (
+  [Scheme_Key] [smallint] NOT NULL,
+  [SchemeAlt_Key] [smallint] NOT NULL,
+  [SchemeName] [varchar](100) NULL,
+  [SchemeShortName] [varchar](20) NULL,
+  [SchemeShortNameEnum] [varchar](20) NULL,
+  [SchemeGroup] [varchar](50) NULL,
+  [SchemeSubGroup] [varchar](50) NULL,
+  [SchemeSegment] [varchar](50) NULL,
+  [SchemeValidCode] [char](1) NULL,
+  [RetailGroup] [varchar](50) NULL,
+  [RetailSegmentsAlt_key] [smallint] NULL,
+  [AssetClass] [varchar](20) NULL,
+  [BSR_Survey] [varchar](50) NULL,
+  [LbrCode] [int] NULL,
+  [SAMISCode] [char](2) NULL,
+  [NewFacilityAllowed] [char](1) NULL,
+  [SrcSysSchemeCode] [varchar](10) NULL,
+  [SrcSysSchemeName] [varchar](100) NULL,
+  [DestSysSchemeCode] [varchar](10) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NULL,
+  [EffectiveToTimeKey] [int] NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModifie] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [timestamp]
+)
+ON [PRIMARY]
+GO

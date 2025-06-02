@@ -1,0 +1,62 @@
+﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
+GO
+
+
+CREATE PROCEDURE [pro].[ProcessingSteps1]
+@UserLoginID VARCHAR(50)='DM585'
+AS
+BEGIN
+
+BEGIN  TRY
+  
+DELETE FROM pro.ProcessingStepStatus WHERE ErrorDate=CAST(GETDATE() AS DATE) and ProcessingStepName='ProcessingSteps1'
+
+DECLARE @TIMEKEY INT = (SELECT TIMEKEY FROM PRO.EXTDATE_MISDB WHERE FLG = 'Y')
+    
+DECLARE @ProcessingDateAudit DATE=(SELECT StartDate FROM PRO.EXTDATE_MISDB WHERE FLG = 'Y')
+
+DELETE FROM PACKAGE_AUDIT ---WHERE IdentityKey=1
+
+INSERT INTO PACKAGE_AUDIT(IdentityKey,UserID,Execution_date,PackageName,TableName,ExecutionStartTime,ExecutionStatus,ProcessingDate)    SELECT 1, @UserLoginID,GETDATE(),'Master', 'Creation Of New Masters',GETDATE(),'P',@ProcessingDateAudit
+
+DELETE FROM YBL_ACS_MIS.DBO.BI_DATASUMMARY WHERE DATA_DATE IN (SELECT  max(DATA_DATE)   FROM YBL_ACS_MIS.DBO.CUSTOMERDATA)
+INSERT INTO YBL_ACS_MIS.DBO.BI_DATASUMMARY
+SELECT DISTINCT DATA_DATE,ETL_DATE,SOURCESYSTEMNAME,'CUSTOMER' DATA_TYPE,COUNT(1) ROW_COUNT,GETDATE() INSERT_TIME FROM YBL_ACS_MIS.DBO.CUSTOMERDATA                                                                                       
+GROUP BY DATA_DATE,ETL_DATE,SOURCESYSTEMNAME                                                                                                                                                                                                          
+UNION
+SELECT DISTINCT DATA_DATE,ETL_DATE,SOURCESYSTEMNAME,'ACCOUNT' DATA_TYPE,COUNT(1) ROW_COUNT,GETDATE() INSERT_TIME FROM YBL_ACS_MIS.DBO.ACCOUNTDATA                                                                                                     
+GROUP BY DATA_DATE,ETL_DATE,SOURCESYSTEMNAME   
+
+
+EXEC [DUPLICATEREMOVES]
+EXEC PRO.DIMBUSINESSSEGMENT_INSERT
+EXEC PRO.DIMLINECODE_INSERT
+EXEC PRO.DIMMNEMONICCODE_INSERT
+EXEC PRO.DIMPRODUCTCODE_INSERT
+EXEC PRO.DIMASSETCLASSDPD_INSERT
+EXEC PRO.CUSTOMER_ACCOUNT_UCIFID_MASTERKEY_GENERATION
+EXEC PRO.COAPPLICANTDETAIL_INSERT
+EXEC PRO.OVERDUEBUCKETDISBINSERT
+EXEC [dbo].[DailyCurrencyExtraction]
+EXEC PRO.LCBGACCOUNTCALDATA
+
+UPDATE PACKAGE_AUDIT SET ExecutionEndTime=GETDATE()  WHERE IdentityKey = 1 and  Execution_date=CAST(GETDATE() AS DATE) AND TableName='Creation Of New Masters'
+UPDATE PACKAGE_AUDIT SET ExecutionStatus='Y' WHERE IdentityKey = 1
+
+SELECT 1 AS StepNo, 'Result' AS TableName
+END TRY
+
+
+BEGIN  CATCH
+		
+		INSERT INTO PRO.ProcessingStepStatus(ProcessingStepName,Completed,ErrorDescription,ErrorDate)
+		values('ProcessingSteps1','N',ERROR_MESSAGE(),GETDATE())
+		UPDATE PACKAGE_AUDIT SET ExecutionStatus='E' WHERE IdentityKey = 1
+
+
+END CATCH
+
+END
+
+
+GO

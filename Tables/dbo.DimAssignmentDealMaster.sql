@@ -1,0 +1,30 @@
+﻿CREATE TABLE [dbo].[DimAssignmentDealMaster] (
+  [AssignmentDeal_Key] [smallint] IDENTITY,
+  [AssignmentDealAlt_Key] [smallint] NOT NULL,
+  [AssignmentDeal] [varchar](20) NULL,
+  [AssignmentDealName] [varchar](200) NULL,
+  [AssignmentDealShortName] [varchar](20) NULL,
+  [AssignmentDealShortNameEnum] [varchar](20) NULL,
+  [AssignmentDealGroup] [varchar](50) NULL,
+  [AssignmentDealSubGroup] [varchar](50) NULL,
+  [AssignmentDealSegment] [varchar](50) NULL,
+  [AssignmentDealValidCode] [char](1) NULL,
+  [SrcSysAssignmentDealCode] [varchar](50) NULL,
+  [SrcSysAssignmentDealName] [varchar](50) NULL,
+  [DestSysAssignmentDealCode] [varchar](10) NULL,
+  [AssetNorm] [varchar](10) NULL,
+  [SourceAlt_Key] [int] NULL,
+  [PercentageSold] [decimal](18, 2) NULL,
+  [AuthorisationStatus] [varchar](2) NULL,
+  [EffectiveFromTimeKey] [int] NULL,
+  [EffectiveToTimeKey] [int] NULL,
+  [CreatedBy] [varchar](20) NULL,
+  [DateCreated] [smalldatetime] NULL,
+  [ModifiedBy] [varchar](20) NULL,
+  [DateModified] [smalldatetime] NULL,
+  [ApprovedBy] [varchar](20) NULL,
+  [DateApproved] [smalldatetime] NULL,
+  [D2Ktimestamp] [timestamp]
+)
+ON [PRIMARY]
+GO

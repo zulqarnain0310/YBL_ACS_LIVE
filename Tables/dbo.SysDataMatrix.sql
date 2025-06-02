@@ -1,0 +1,33 @@
+﻿CREATE TABLE [dbo].[SysDataMatrix] (
+  [MonthFirstDate] [date] NULL,
+  [MonthLastDate] [date] NULL,
+  [TimeKey] [int] NULL,
+  [MonthName] [varchar](15) NULL,
+  [Month] [varchar](50) NULL,
+  [Year] [varchar](4) NULL,
+  [LastFriday] [date] NULL,
+  [LastReportingFriday] [date] NULL,
+  [CurrentStatus] [char](1) NULL,
+  [Prev_Month_Key] [int] NULL,
+  [Prev_Qtr_key] [int] NULL,
+  [Prev_Fiscal_HalfYear_key] [int] NULL,
+  [Prev_Fiscal_Year_key] [int] NULL,
+  [DataEffectiveFromDate] [date] NULL,
+  [DataEffectiveToDate] [date] NULL,
+  [DataEffectiveFromTimeKey] [int] NULL,
+  [AssetClassificationDt] [date] NULL,
+  [Week_Key] [int] NULL,
+  [Fortnight_Key] [int] NULL,
+  [Month_Key] [int] NULL,
+  [Qtr_key] [int] NULL,
+  [Fiscal_HalfYear_key] [int] NULL,
+  [Fiscal_Year_key] [int] NULL,
+  [IsClosingDay] [char](1) NULL,
+  [MOC_Initialised] [char](1) NULL,
+  [MOC_Frozen] [char](1) NULL,
+  [QTR_Initialised] [char](1) NULL,
+  [QTR_Frozen] [char](1) NULL,
+  [BS_MasterFreeze] [char](1) NULL
+)
+ON [PRIMARY]
+GO

@@ -1,0 +1,18 @@
+﻿CREATE TABLE [dbo].[CFPM_ENPA_COLLATERAL_UAT_02] (
+  [LIABILITY_ID] [varchar](500) NULL,
+  [FACILITY_ID] [varchar](500) NULL,
+  [COVERAGE_PERCENTAGE] [varchar](500) NULL,
+  [CUSTOMER_ID] [varchar](500) NULL,
+  [UCIC_ID] [varchar](500) NULL,
+  [THIRDPARTY_ID] [varchar](500) NULL,
+  [COLLATERAL_ID] [varchar](500) NULL,
+  [COLLATERAL_TYPE] [varchar](500) NULL,
+  [COLLATERAL_SUBCATEGORY] [varchar](500) NULL,
+  [CURRENCY_CODE] [varchar](500) NULL,
+  [COLLATERAL_VALUE] [varchar](500) NULL,
+  [VALUATION_EXPIRY] [varchar](500) NULL,
+  [ALLOCATED_AMOUNT] [varchar](500) NULL,
+  [EXTRACTION_DATE] [varchar](500) NULL
+)
+ON [PRIMARY]
+GO
