@@ -1,5 +1,7 @@
 ﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
 GO
+
+
 /*=========================================
  AUTHER : SANJEEV KUMAR SHARMA
  CREATE DATE : 15-04-2018
@@ -9,7 +11,7 @@ GO
  EXEC [PRO].[INSERTDATAFORASSETCLASSFICATIONYES]  @TIMEKEY=26052
 =============================================*/
 
-CREATE PROCEDURE [pro].[InsertDataforAssetClassficationYes]
+CREATE PROCEDURE [pro].[InsertDataforAssetClassficationYes_20250604_NEW]
 --@TIMEKEY INT 
 WITH RECOMPILE
 AS
