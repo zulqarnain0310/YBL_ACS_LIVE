@@ -1,5 +1,8 @@
 ﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
 GO
+
+
+
 --/*=========================================
 -- AUTHER : AMAR YADAV
 -- CREATE DATE : 23-10-2023
@@ -11,7 +14,7 @@ GO
 
  
 
-CREATE PROCEDURE [pro].[COBORROWER_DEG_UPG_MARKING]--26886,'U'
+CREATE PROCEDURE [pro].[COBORROWER_DEG_UPG_MARKING_20250609]--26886,'U'
 	@TIMEKEY INT=49999,
 	@FLG_UPG_DEG CHAR(1)='U' --------D -- FOR NPA MARKING, U FOR UPGRADE
 	WITH RECOMPILE
@@ -304,41 +307,6 @@ IF @FLG_UPG_DEG='D'
 		INNER JOIN PRO.COBORROWERDETAILS  B 
 		ON  A.BANKASSETCLASS='WRITEOFF' AND A.CUSTOMERACID=B.AGREEMENTNO 
 		WHERE ISNULL(B.FLGDEG ,'N')='N'
-
---ADDED BY BALA ON 20250606
-		UPDATE B SET 
-		 B.FlgDeg ='Y' 
-		,B.DegDate=A.FinalNpaDt
-		,B.FlgUpg =A.FlgUpg 
-		,B.UpgDate=A.UpgDate
-		,B.Pri_Assetclassalt_key = A.FinalAssetClassAlt_Key
-		,B.Pri_NPADate			 = A.FinalNpaDt
-		,B.Co_Assetclassalt_key	 = A.FinalAssetClassAlt_Key
-		,B.Co_NPADate			 = A.FinalNpaDt
-	   FROM PRO.accountcal  a
-		INNER JOIN PRO.CoBorrowerDetails  b 
-		ON  A.CustomerAcID=B.AGREEMENTNO 
-		where isnull(b.FlgDeg ,'N')='N' and A.FinalAssetClassAlt_Key>1
-		and A.DegReason not like '%PRIMARY BORROWER%' 
-
-		UPDATE B SET 
-		 B.FlgDeg =A.FlgDeg 
-		,B.DegDate=A.FinalNpaDt
-		,B.FlgUpg =A.FlgUpg 
-		,B.UpgDate=A.UpgDate
-		,B.Pri_Assetclassalt_key = A.FinalAssetClassAlt_Key
-		,B.Pri_NPADate			 = A.FinalNpaDt
-		,B.Co_Assetclassalt_key	 = A.FinalAssetClassAlt_Key
-		,B.Co_NPADate			 = A.FinalNpaDt
-		FROM PRO.accountcal  a
-		INNER JOIN PRO.CoBorrowerDetails  b 
-		ON B.EffectiveFromTimeKey<=@TimeKey AND B.EffectiveToTimeKey>=@TimeKey
-		--AND A.flgdeg='Y' 
-		AND A.RefCustomerID=B.APPLICANT_FCR_CUST_ID 
-		where isnull(b.FlgDeg ,'N')='N' and A.FinalAssetClassAlt_Key>1
-		and A.DegReason not like '%PRIMARY BORROWER%' 
-
---ADDED BY BALA ON 20250606
 
 		/* AMAR - 16052024 -- UPDATE FLGDEG AND DEGDATE FOR MOC CUSTOMER MARKED AS NPA*/
 UPDATE A
