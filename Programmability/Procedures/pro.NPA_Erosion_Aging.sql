@@ -54,6 +54,7 @@ SUM(ISNULL(A.SecurityValue,0)) SecurityValue	--- Retail Security added on Erosio
 INTO #CTE_CustomerWiseBalance FROM PRO.ACCOUNTCAL A
  INNER JOIN PRO.CUSTOMERCAL B ON A.SourceSystemCustomerID=B.SourceSystemCustomerID
               and A.UCIF_ID=B.UCIF_ID
+INNER JOIN DIMPRODUCT D ON D.ProductCode=A.ProductCode--ADDED ON 20250702 BY ZAIN TO ADD CREDAVENUE_DA SOURCE SYSTEM FOR EROSION
 WHERE   ( b.SysAssetClassAlt_Key NOT IN (select AssetClassAlt_Key from DimAssetClass where AssetClassShortName ='STD' AND EffectiveFromTimeKey<=@TIMEKEY AND EffectiveToTimeKey>=@TIMEKEY ))
  --AND ISNULL(B.FlgDeg,'N')<>'Y')  CHANGE AS PER BANK REQUEST ON 20250205 ADDED BY ZAIN RAISED BY PRIYA MEENA
  AND (ISNULL(B.FlgProcessing,'N')='N') 
@@ -68,6 +69,7 @@ WHERE   ( b.SysAssetClassAlt_Key NOT IN (select AssetClassAlt_Key from DimAssetC
  AND a.FinalAssetClassAlt_Key > 1
   AND ISNULL(A.BANKASSETCLASS,'N')<>'WRITEOFF'
   AND ISNULL(A.ProductCode,'') not in ('NSLI','NSLB', 'NSLR','TRGC','TREC')
+  AND D.ProductErosion='Y'--ADDED ON 20250702 BY ZAIN TO ADD CREDAVENUE_DA SOURCE SYSTEM FOR EROSION
 GROUP BY A.UCIF_ID
 
 
