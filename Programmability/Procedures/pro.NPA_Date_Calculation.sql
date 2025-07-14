@@ -1,5 +1,12 @@
-﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
+USE [YBL_ACS]
 GO
+/****** Object:  StoredProcedure [pro].[NPA_Date_Calculation]    Script Date: 7/14/2025 11:33:00 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 
 /*=========================================
  AUTHER : TRILOKI KKANNA
@@ -8,7 +15,7 @@ GO
  DESCRIPTION : CALCULATED NPA DATE 
  --EXEC [PRO].[NPA_DATE_CALCULATION]  @TIMEKEY=25140
 =============================================*/
- CREATE PROCEDURE [pro].[NPA_Date_Calculation]
+ alter PROCEDURE [Pro].[NPA_Date_Calculation]
  @TIMEKEY INT
  with recompile
  AS
@@ -19,7 +26,6 @@ GO
 
 DECLARE @INTTSERNORM VARCHAR(50)=(SELECT REFVALUE FROM PRO.REFPERIOD WHERE BUSINESSRULE='RECOVERYADJUSTMENT' AND EffectiveFromTimeKey<=@TIMEKEY AND EffectiveToTimeKey>=@TIMEKEY)  --'PROGRESSIVE'
 DECLARE @ProcessDate DATE=(SELECT DATE FROM SysDayMatrix WHERE TimeKey=@TIMEKEY)
-
 
 UPDATE   PRO.AccountCal SET InitialNpaDt=NULL WHERE (InitialNpaDt='1900-01-01'  OR InitialNpaDt='01/01/1900')
 UPDATE   PRO.AccountCal SET FinalNpaDt=NULL   WHERE FinalNpaDt='1900-01-01'  OR FinalNpaDt='01/01/1900'
@@ -46,9 +52,7 @@ IF OBJECT_ID('TEMPDB..#TEMPTABLEDPD') IS NOT NULL
 			 CASE WHEN  isnull(A.DPD_Overdrawn,0)>=isnull(A.RefPeriodOverDrawn	,0)	    THEN A.DPD_Overdrawn   ELSE 0   END DPD_Overdrawn,  
 			 CASE WHEN  isnull(A.DPD_Overdue,0)>=isnull(A.RefPeriodOverdue	,0)		    THEN A.DPD_Overdue     ELSE 0   END DPD_Overdue , 
 			 CASE WHEN  isnull(A.DPD_Renewal,0)>=isnull(A.RefPeriodReview	,0)			THEN A.DPD_Renewal     ELSE 0   END  DPD_Renewal ,
-			 CASE WHEN  isnull(A.DPD_StockStmt,0)>=isnull(A.RefPeriodStkStatement,0)       THEN A.DPD_StockStmt   ELSE 0   END DPD_StockStmt ,
-			 CASE WHEN  isnull(A.DPD_OTS,0)>0 THEN A.DPD_OTS ELSE 0   END DPD_OTS, /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213*/
-			 CASE WHEN  isnull(A.DPD_DCCO,0)>0 THEN A.DPD_DCCO ELSE 0   END DPD_DCCO /*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303*/
+			 CASE WHEN  isnull(A.DPD_StockStmt,0)>=isnull(A.RefPeriodStkStatement,0)       THEN A.DPD_StockStmt   ELSE 0   END DPD_StockStmt  
 			 INTO #TEMPTABLEDPD
 			  FROM PRO.ACCOUNTCAL A 
 			 WHERE ( 
@@ -58,62 +62,38 @@ IF OBJECT_ID('TEMPDB..#TEMPTABLEDPD') IS NOT NULL
 				   OR isnull(DPD_Overdue,0)>=isnull(RefPeriodOverdue,0)
 				   OR isnull(DPD_Renewal,0)>=isnull(RefPeriodReview,0)
                    OR isnull(DPD_StockStmt,0)>=isnull(RefPeriodStkStatement,0)
-				   OR isnull(DPD_OTS,0)>0/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-				   OR isnull(DPD_DCCO,0)>0/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303*/
 			      ) 
 	
 					  
 IF OBJECT_ID('TEMPDB..#TEMPTABLENPA') IS NOT NULL
 DROP TABLE #TEMPTABLENPA
 
-select A.CustomerAcID ,CASE  WHEN (isnull(A.DPD_IntService,0)>=isnull(A.DPD_NoCredit,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Overdrawn,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Renewal,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_StockStmt,0) 
-							AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_OTS,0)/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 END*/
-							AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							) 
+select A.CustomerAcID ,CASE  WHEN (isnull(A.DPD_IntService,0)>=isnull(A.DPD_NoCredit,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Overdrawn,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_Renewal,
+0) AND isnull(A.DPD_IntService,0)>=isnull(A.DPD_StockStmt,0)) 
     THEN isnull(a.DPD_IntService,0)
 				
-WHEN (isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_IntService,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Overdrawn,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Renewal,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_StockStmt,0) 
-							AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_OTS,0)/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-							AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							) 
+WHEN (isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_IntService,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Overdrawn,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_Renewal,0) AND isnull(A.DPD_NoCredit,0)>=isnull(A.DPD_StockStmt,0)) 
 	THEN isnull(a.DPD_NoCredit,0)
 				
-WHEN (isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_NoCredit,0)  AND isnull(A.DPD_Overdrawn,0)>= isnull(A.DPD_IntService,0) AND  isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_Renewal,0) AND isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_StockStmt,0) 
-							AND isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_OTS,0)/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-							AND isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							)
+WHEN (isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_NoCredit,0)  AND isnull(A.DPD_Overdrawn,0)>= isnull(A.DPD_IntService,0) AND  isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_Overdrawn,0)>=isnull(A.DPD_Renewal,0) AND isnull(A.DPD_Overdrawn
+,0)>=isnull(A.DPD_StockStmt,0))
 	THEN isnull(a.DPD_Overdrawn,0)
 				
-WHEN (isnull(A.DPD_Renewal,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_Renewal,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_Renewal,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_Renewal,0)>=isnull(A.DPD_Overdue,0)  AND isnull(A.DPD_Renewal,0) >=isnull(A.DPD_StockStmt ,0) 
-							AND isnull(A.DPD_Renewal,0) >=isnull(A.DPD_OTS ,0)/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-							AND isnull(A.DPD_Renewal,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							) 
+WHEN (isnull(A.DPD_Renewal,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_Renewal,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_Renewal,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_Renewal,0)>=isnull(A.DPD_Overdue,0)  AND isnull(A.DPD_Renewal,0)
+ >=isnull(A.DPD_StockStmt ,0)) 
 	THEN isnull(a.DPD_Renewal,0)
 				
-WHEN (isnull(A.DPD_Overdue,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_Overdue,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_Overdue,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_Overdue,0)>=isnull(A.DPD_Renewal,0)  AND isnull(A.DPD_Overdue,0) >=isnull(A.DPD_StockStmt,0) 
-							AND isnull(A.DPD_Overdue,0) >=isnull(A.DPD_OTS,0) /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-							AND isnull(A.DPD_Overdue,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							)
+WHEN (isnull(A.DPD_Overdue,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_Overdue,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_Overdue,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_Overdue,0)>=isnull(A.DPD_Renewal,0)  AND isnull(A.DPD_Overdue,0)
+ >=isnull(A.DPD_StockStmt,0) )
 	THEN isnull(a.DPD_Overdue,0)
-/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 */
-WHEN (isnull(A.DPD_OTS,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_OTS,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_OTS,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_OTS,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_OTS,0)>=isnull(A.DPD_Renewal,0)  
-							AND isnull(A.DPD_OTS,0) >=isnull(A.DPD_StockStmt,0)
-							AND isnull(A.DPD_OTS,0)>=isnull(A.DPD_DCCO,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							)
-	THEN isnull(a.DPD_OTS,0)
-/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 END*/				
-/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 */
-WHEN (isnull(A.DPD_DCCO,0)>=isnull(A.DPD_NoCredit ,0) AND isnull(A.DPD_DCCO,0)>=isnull(A.DPD_Overdue,0) AND isnull(A.DPD_DCCO,0)>= isnull(A.DPD_IntService ,0) AND  isnull(A.DPD_DCCO,0)>=isnull(A.DPD_Overdrawn,0)  AND   isnull(A.DPD_DCCO,0)>=isnull(A.DPD_Renewal,0)  
-							AND isnull(A.DPD_DCCO,0) >=isnull(A.DPD_StockStmt,0)
-							AND isnull(A.DPD_DCCO,0)>=isnull(A.DPD_OTS,0)/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-							)
-	THEN isnull(a.DPD_DCCO,0)
-/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
+				
 ELSE isnull(a.DPD_StockStmt,0)
 				
 END AS REFPERIODNPA
 
 INTO #TEMPTABLENPA    FROM #TEMPTABLEDPD A 	 INNER JOIN  PRO.ACCOUNTCAL B   ON A.CustomerAcID=B.CustomerAcID  
+
+
 
 UPDATE  A  SET FinalNpaDt= DATEADD(DAY,ISNULL(REFPERIODMAX,0),DATEADD(DAY,-ISNULL(REFPERIODNPA,0),@ProcessDate))
 FROM PRO.ACCOUNTCAL A INNER JOIN #TEMPTABLENPA B ON A.CustomerAcID=B.CustomerAcID
@@ -125,13 +105,11 @@ WHERE  ISNULL(A.FLGDEG,'N')='Y'
 
 
 
-UPDATE   A SET  A.FINALNPADT=CASE WHEN DATEDIFF(DAY,@ProcessDate,OTS_Settlement_Date)<0 THEN OTS_Settlement_Date END--@PROCESSDATE /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 END*/		
+UPDATE   A SET  A.FINALNPADT=@ProcessDate  
 FROM PRO.ACCOUNTCAL A  INNER JOIN PRO.CUSTOMERCAL B ON A.REFCUSTOMERID =B.REFCUSTOMERID
 WHERE A.ASSET_NORM='ALWYS_NPA' AND  isnull(a.FLGDEG,'N')='Y' 
 
-UPDATE   A SET  A.FINALNPADT=@ProcessDate  
-FROM PRO.ACCOUNTCAL A 
-WHERE  isnull(a.FLGDEG,'N')='Y' AND A.InttServiced='Y' AND A.SourceAlt_Key=1 
+
  
 
 /*------MIN NPA DATE CUSTOMER LEVEL ---------------------*/
@@ -185,4 +163,4 @@ BEGIN  CATCH
 END CATCH
 SET NOCOUNT OFF
 END
-GO
+

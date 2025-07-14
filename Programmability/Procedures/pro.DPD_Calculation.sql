@@ -1,5 +1,14 @@
-﻿SET QUOTED_IDENTIFIER, ANSI_NULLS ON
+USE [YBL_ACS]
 GO
+/****** Object:  StoredProcedure [pro].[DPD_Calculation]    Script Date: 7/14/2025 11:17:28 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
 
 /*=========================================
  AUTHER : TRILOKI KHANNA
@@ -8,7 +17,7 @@ GO
  DESCRIPTION : CALCULATION OF DPD
  --Exec  [Pro].[DPD_Calculation]  @timekey=25140
 =============================================*/
-CREATE PROCEDURE [pro].[DPD_Calculation]
+alter PROCEDURE [Pro].[DPD_Calculation] 
 @TIMEKEY INT
 with recompile
 AS
@@ -24,13 +33,12 @@ UPDATE PRO.AccountCal SET ContiExcessDt     = NULL   WHERE (ContiExcessDt='1900-
 UPDATE PRO.AccountCal SET OverDueSinceDt    = NULL   WHERE (OverDueSinceDt='1900-01-01' OR OverDueSinceDt='01/01/1900') 
 UPDATE PRO.AccountCal SET ReviewDueDt       = NULL   WHERE (ReviewDueDt='1900-01-01' OR ReviewDueDt='01/01/1900') 
 UPDATE PRO.AccountCal SET StockStDt         = NULL   WHERE (StockStDt='1900-01-01' OR StockStDt='01/01/1900') 
-UPDATE PRO.AccountCal SET OTS_Settlement_Date         = NULL   WHERE (OTS_Settlement_Date='1900-01-01' OR OTS_Settlement_Date='01/01/1900') /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213*/
 
 
 /*------------------INITIAL ALL DPD 0 FOR RE-PROCESSING------------------------------- */
 
 UPDATE A SET A.DPD_IntService=0,A.DPD_NoCredit=0,A.DPD_Overdrawn=0,A.DPD_Overdue=0,A.DPD_Renewal=0,
-             A.DPD_StockStmt=0,A.DPD_OTS=0/*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213*/
+             A.DPD_StockStmt=0
 FROM PRO.AccountCal A
 -- INNER JOIN PRO.CustomerCal B ON A.RefCustomerID =B.RefCustomerID
 ---WHERE (B.FlgProcessing='N') 
@@ -46,7 +54,8 @@ UPDATE A SET
 	     ,A.DPD_Overdue =   (CASE WHEN  A.OverDueSinceDt IS NOT NULL   THEN  DATEDIFF(DAY,A.OverDueSinceDt,  @PROCESSDATE) + 1 ELSE 0 END)    -- 1.01 BDTS_Business_Case_ENPA_DPD_Correction condition modify By Triloki Add 1 Day
 	     ,A.DPD_Renewal =   (CASE WHEN  A.ReviewDueDt IS NOT NULL      THEN DATEDIFF(DAY,A.ReviewDueDt, @PROCESSDATE)  + 1     ELSE 0 END)    -- 1.01 BDTS_Business_Case_ENPA_DPD_Correction condition modify By Triloki Add 1 Day
 	    ,A.DPD_StockStmt= (CASE WHEN  A.StockStDt IS NOT NULL         THEN   DATEDIFF(DAY,A.StockStDt,@PROCESSDATE)  + 1      ELSE 0 END)      --  1.01 BDTS_Business_Case_ENPA_DPD_Correction modify By Triloki Add 1 Day
-FROM PRO.AccountCal A where SourceAlt_Key not in (3,4,10,11) --FOR SFIN AccountData_FinSmart 15102023
+FROM PRO.AccountCal A where SourceAlt_Key not in (3,4,10,11 --FOR SFIN AccountData_FinSmart 15102023
+							,13) /*ADDED BY ZAIN ON LOCAL 20250101 ON UAT 20250107 FOR BRNET*/
 --INNER JOIN PRO.CustomerCal B ON A.RefCustomerID =B.RefCustomerID
 --WHERE isnull(B.FlgProcessing,'N')='N'  
 --and isnull(A.AccountStatus,'N')<>'Z' 
@@ -60,24 +69,23 @@ UPDATE A SET
 	     ,A.DPD_Overdue =   (CASE WHEN  A.OverDueSinceDt IS NOT NULL   THEN  DATEDIFF(DAY,A.OverDueSinceDt,  @PROCESSDATE)  ELSE 0 END)    -- 1.01 BDTS_Business_Case_ENPA_DPD_Correction condition modify By Triloki Add 1 Day
 	     ,A.DPD_Renewal =   (CASE WHEN  A.ReviewDueDt IS NOT NULL      THEN DATEDIFF(DAY,A.ReviewDueDt, @PROCESSDATE)      ELSE 0 END)    -- 1.01 BDTS_Business_Case_ENPA_DPD_Correction condition modify By Triloki Add 1 Day
 	    ,A.DPD_StockStmt= (CASE WHEN  A.StockStDt IS NOT NULL         THEN   DATEDIFF(DAY,A.StockStDt,@PROCESSDATE)       ELSE 0 END)      --  1.01 BDTS_Business_Case_ENPA_DPD_Correction modify By Triloki Add 1 Day
-FROM PRO.AccountCal A where SourceAlt_Key  in (3,4,10,11)--FOR SFIN AccountData_FinSmart 15102023
-
+FROM PRO.AccountCal A where SourceAlt_Key  in (3,4,10,11--FOR SFIN AccountData_FinSmart 15102023
+						,13)/*ADDED BY ZAIN ON LOCAL 20250101 ON UAT 20250107 FOR BRNET*/
 
 /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213*/
 		UPDATE A SET A.DPD_OTS=(CASE WHEN  A.OTS_Settlement_Flag ='Y' THEN DATEDIFF(DAY,A.OTS_Settlement_Date,@PROCESSDATE) + 1 ELSE 0 END)
 			FROM PRO.AccountCal A 
-		where SourceAlt_Key  in (3,4)
-			AND A.OTS_Settlement_Flag ='Y'
-			AND A.EffectiveFromTimeKey<=@TIMEKEY AND EffectiveToTimeKey>=@TIMEKEY
+		where 
+		--SourceAlt_Key  in (3,4)AND 
+		A.OTS_Settlement_Flag ='Y'
+		
+		
+	 UPDATE PRO.AccountCal SET OTS_Provision_Flag= 'OTR' WHERE isnull(DPD_OTS,0) > 90
+		
+		
 /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 END*/
 
-/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303*/
-		UPDATE A SET A.DPD_DCCO=(CASE WHEN (DATEDIFF(DAY,A.FIN_DCCO_DATE,@PROCESSDATE)+1)>0 THEN DATEDIFF(DAY,A.FIN_DCCO_DATE,@PROCESSDATE)+1 ELSE 0 END)
-			FROM PRO.AccountCal A 
-		where A.FIN_DCCO_DATE IS NOT NULL
-			AND A.EffectiveFromTimeKey<=@TIMEKEY AND EffectiveToTimeKey>=@TIMEKEY
-			
-/*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
+
 
 UPDATE A SET DPD_Overdue= isnull((CASE WHEN  A.DebitSinceDt IS NOT NULL   THEN  DATEDIFF(DAY,A.DebitSinceDt,  @PROCESSDATE)+1 ELSE 0 END),0)
 FROM PRO.AccountCal A
@@ -100,9 +108,6 @@ WHERE OverDueSinceDt IS NOT NULL and SourceAlt_Key = 5
  UPDATE PRO.AccountCal SET DPD_Overdue=0 WHERE isnull(DPD_Overdue,0)<0
  UPDATE PRO.AccountCal SET DPD_Renewal=0 WHERE isnull(DPD_Renewal,0)<0
  UPDATE PRO.AccountCal SET DPD_StockStmt=0 WHERE isnull(DPD_StockStmt,0)<0
- UPDATE PRO.AccountCal SET DPD_OTS=0 WHERE isnull(DPD_OTS,0)<0 /*FOR OTS CR ADDED BY ZAIN  ON LOCAL 20250213 END*/
- UPDATE PRO.AccountCal SET DPD_DCCO=0 WHERE isnull(DPD_DCCO,0)<0 /*FOR DCCO CR ADDED BY ZAIN  ON LOCAL 20250303 END*/
-
 /*------------DPD IS ZERO FOR ALL CC ACCOUNT DUE TO LASTCRDATE ------------------------------------*/
 
 UPDATE A SET DPD_NoCredit=0
@@ -483,4 +488,4 @@ END
 
 
 
-GO
+

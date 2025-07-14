@@ -1,11 +1,11 @@
 USE [YBL_ACS]
 GO
-/****** Object:  StoredProcedure [pro].[NPA_Erosion_Aging]    Script Date: 7/2/2025 12:39:30 PM ******/
+/****** Object:  StoredProcedure [pro].[NPA_Erosion_Aging]    Script Date: 7/14/2025 11:38:27 AM ******/
 SET ANSI_NULLS ON
 GO
+
 SET QUOTED_IDENTIFIER ON
 GO
-
 
 
 
@@ -17,7 +17,7 @@ GO
  --EXEC [PRO].[NPA_Erosion_Aging] @TIMEKEY=27419
 =============================================*/
 
-ALTER PROCEDURE [pro].[NPA_Erosion_Aging]
+ALTER PROCEDURE [Pro].[NPA_Erosion_Aging]
 @TIMEKEY INT
 with recompile
 AS
@@ -262,7 +262,7 @@ SELECT A.AccountEntityID FROM PRO.AccountCal A
                                                                 CURDAT.AdvSecurityValueDetail Sec ON 
                                                  (SEC.EffectiveFromTimeKey < = @TimeKey AND SEC.EffectiveToTimeKey >= @TimeKey)
                                                                                                                                                                                 AND Advsec.EffectiveFromTimeKey < = @Timekey
-                                                                                                                                                                                AND Advsec.EffectiveToTimeKey > = @Timekey
+                                                                                                                                             AND Advsec.EffectiveToTimeKey > = @Timekey
                                                                                                                                                                                 AND Advsec.SecurityEntityID=Sec.SecurityEntityID
                                                 INNER JOIN
                                                                 DIMPRODUCT D ON A.ProductAlt_Key=D.ProductAlt_Key
@@ -277,7 +277,7 @@ UPDATE A SET A.SecurityValue=0,SecApp='U'
 FROM PRO.AccountCal A INNER JOIN CTE B ON A.AccountEntityID=B.AccountEntityID */
 /*SECURITY EROSION CR END*/
 
-
+-----FINONE,CREDAVENUE---
 ;WITH CTE AS(
 SELECT A.AccountEntityID FROM PRO.AccountCal A 
                                                 INNER JOIN
@@ -304,7 +304,6 @@ FROM PRO.AccountCal A INNER JOIN CTE B ON A.AccountEntityID=B.AccountEntityID
 
 
 
-
 ;WITH CTE1 AS(
 SELECT A.AccountEntityID FROM PRO.AccountCal A 
                                                 INNER JOIN
@@ -326,8 +325,35 @@ SELECT A.AccountEntityID FROM PRO.AccountCal A
 												
 
 )
-UPDATE A SET A.SecurityValue=0,SecApp='U' 
+UPDATE A SET A.SecurityValue=0,SecApp='U'
 FROM PRO.AccountCal A INNER JOIN CTE1 B ON A.AccountEntityID=B.AccountEntityID
+
+--;WITH CTE2 AS(
+--SELECT A.AccountEntityID FROM PRO.AccountCal A 
+--                                                INNER JOIN
+--                                                                CURDAT.AdvSecurityDetail Advsec ON A.AccountEntityID=ADVSEC.AccountEntityId                                
+--                                                INNER JOIN 
+--                                                                CURDAT.AdvSecurityValueDetail Sec ON 
+--                                                 (SEC.EffectiveFromTimeKey < = @TimeKey AND SEC.EffectiveToTimeKey >= @TimeKey)
+--                                                                                                                                                                                AND Advsec.EffectiveFromTimeKey < = @Timekey
+--                                                                                                                                                                                AND Advsec.EffectiveToTimeKey > = @Timekey
+--                                                                                                                                                                                AND Advsec.SecurityEntityID=Sec.SecurityEntityID
+--                                                INNER JOIN
+--                                                                DIMPRODUCT D ON A.ProductAlt_Key=D.ProductAlt_Key
+--                                                                                                                                AND D.EffectiveFromTimeKey < = @Timekey
+--                                                                                                                                AND D.EffectiveToTimeKey > = @Timekey
+--                                                                                                                                AND D.ProductErosion='Y'
+--																																AND D.SrcSysProductName='FCR'
+--                                                WHERE EntryType='Retail' AND ISNULL(CurrentValue,0)>0 and  
+--                                               cast(SEC.VALUATIONDATE as date) = '1900-01-01'
+
+--)
+--UPDATE A SET SecApp='U'
+--FROM PRO.AccountCal A INNER JOIN CTE2 B ON A.AccountEntityID=B.AccountEntityID
+
+
+
+
 
 
 
@@ -347,12 +373,13 @@ WHERE    a.FinalAssetClassAlt_Key NOT IN (select AssetClassAlt_Key from DimAsset
  and ISNULL(A.PrincOutStd,0)>=0 
  AND a.RefCustomerID<>'0' and ( A.UCIF_ID IS NOT NULL AND A.UCIF_ID<>'0' )
  and isnull(SecurityValue,0)>=0 and b.ProductErosion='Y' and a.SecApp='S' ---added a.SecApp='S'
-
+ 
 
 IF OBJECT_ID('TEMPDB..#CTE_PrvQtrRV1') IS NOT NULL
    DROP TABLE #CTE_PrvQtrRV1
 
 SELECT CustomerAcID,SUM(ISNULL(A.SecurityValue,0)) PrvQtrRV
+
 INTO #CTE_PrvQtrRV1
  FROM PRO.AccountCal_Hist A
 INNER JOIN dimproduct b on a.ProductAlt_Key=b.ProductAlt_Key
@@ -500,7 +527,28 @@ WHERE ISNULL(A.PrincOutStd,0)>=0  AND D.AssetClassShortName<>'STD'
 /*-------------------UPDATING ASSET CLASS DUE TO AGING--------*/
 
 
+--;WITH CTE3 AS(
+--SELECT A.AccountEntityID FROM PRO.AccountCal A 
+--                                                INNER JOIN
+--                                                                CURDAT.AdvSecurityDetail Advsec ON A.AccountEntityID=ADVSEC.AccountEntityId                                
+--                                                INNER JOIN 
+--                                                                CURDAT.AdvSecurityValueDetail Sec ON 
+--                                                 (SEC.EffectiveFromTimeKey < = @TimeKey AND SEC.EffectiveToTimeKey >= @TimeKey)
+--                                                                                                                                                                                AND Advsec.EffectiveFromTimeKey < = @Timekey
+--                                                                                                                                                                                AND Advsec.EffectiveToTimeKey > = @Timekey
+--                                                                                                                                                                                AND Advsec.SecurityEntityID=Sec.SecurityEntityID
+--                                                INNER JOIN
+--                                                                DIMPRODUCT D ON A.ProductAlt_Key=D.ProductAlt_Key
+--                                                                                                                                AND D.EffectiveFromTimeKey < = @Timekey
+--                                                                                                                                AND D.EffectiveToTimeKey > = @Timekey
+--                                                                                                                                AND D.ProductErosion='Y'
+--																																AND D.SrcSysProductName='FCR'
+--                                                WHERE EntryType='Retail' AND ISNULL(CurrentValue,0)>0 and  
+--                                               cast(SEC.VALUATIONDATE as date) = '1900-01-01'
 
+--)
+--UPDATE A SET SecApp='S'
+--FROM PRO.AccountCal A INNER JOIN CTE3 B ON A.AccountEntityID=B.AccountEntityID
 
 
 
@@ -644,3 +692,16 @@ END CATCH
 
 SET NOCOUNT OFF
 END
+
+
+
+
+
+
+
+
+
+
+
+
+
